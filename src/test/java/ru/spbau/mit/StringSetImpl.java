@@ -38,7 +38,7 @@ public class StringSetImpl implements StringSet {
 
 		StringSetEntry addEntry(char letter, boolean isLastLetter) {
 			StringSetEntry e = new StringSetEntry(this, isLastLetter);
-			next.add(getIndex(letter), e);
+			next.set(getIndex(letter), e);
 			numberOfSuccessors++;
 			return e;
 		}
