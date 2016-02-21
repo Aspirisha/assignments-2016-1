@@ -11,10 +11,10 @@ public class StringSetImpl implements StringSet {
     private class StringSetEntry {
         static final int ALPHABET_SIZE = 52 + 6; // covers A-Z[...a-z
 
-        boolean isLastLetter;
+        private boolean isLastLetter;
         private List<StringSetEntry> next = new ArrayList<>(ALPHABET_SIZE);
-        StringSetEntry prev;
-        int numberOfSuccessors = 0;
+        private StringSetEntry prev;
+        private int numberOfSuccessors = 0;
 
         StringSetEntry(StringSetEntry prev, boolean isLastLetter) {
             this.prev = prev;
@@ -48,7 +48,7 @@ public class StringSetImpl implements StringSet {
             StringSetEntry nextEntry = next.get(idx);
             if (nextEntry.numberOfSuccessors == 1 && notLastLetter) {
                 next.set(idx, null);
-            } 
+            }
 
             return nextEntry;
         }
@@ -56,8 +56,8 @@ public class StringSetImpl implements StringSet {
 
 
     private class Prefix {
-        StringSetEntry lastEntry;
-        int prefixLength;
+        private StringSetEntry lastEntry;
+        private int prefixLength;
 
         Prefix(StringSetEntry lastEntry, int prefixLength) {
             this.lastEntry = lastEntry;
