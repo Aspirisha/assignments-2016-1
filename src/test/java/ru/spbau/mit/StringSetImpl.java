@@ -50,10 +50,8 @@ public class StringSetImpl implements StringSet {
 			StringSetEntry nextEntry = next.get(idx);
 			if (nextEntry.numberOfSuccessors == 1 && notLastLetter) {
 				next.set(idx, null);
-			} else {
-				isLastLetter = false;
-			}
-
+			} 
+			
 			return nextEntry;
 		}
 	}
@@ -90,13 +88,12 @@ public class StringSetImpl implements StringSet {
 	private void removePrefix(String s) {
 		StringSetEntry curEntry = root;
 
-		for (StringCharacterIterator iter = new StringCharacterIterator(s); 
-				iter.current() != CharacterIterator.DONE; ) {
-			char currentLetter = iter.current();
-			iter.next();
-			boolean notLastLetter = iter.current() != CharacterIterator.DONE;
+		for (int i = 0; i < s.length(); i++) {
+			char currentLetter = s.charAt(i);
+			boolean notLastLetter = i < (s.length() - 1);
 			curEntry = curEntry.removeEntry(currentLetter, notLastLetter);
 		}
+		curEntry.isLastLetter = false;
 	}
 
 	@Override
@@ -140,9 +137,6 @@ public class StringSetImpl implements StringSet {
 	public boolean remove(String element) {
 		if (!contains(element))
 			return false;
-		
-		if (element.isEmpty())
-			return true;
 		
 		removePrefix(element);
 		return true;
