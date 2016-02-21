@@ -139,6 +139,7 @@ public class StringSetImpl implements StringSet {
 			return false;
 		
 		removePrefix(element);
+		size--;
 		return true;
 	}
 
