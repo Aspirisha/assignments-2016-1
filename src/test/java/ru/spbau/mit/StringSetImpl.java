@@ -1,7 +1,5 @@
 package ru.spbau.mit;
 
-import java.text.CharacterIterator;
-import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.List;
 
