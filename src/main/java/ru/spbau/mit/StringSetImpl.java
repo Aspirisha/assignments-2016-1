@@ -32,8 +32,6 @@ public class StringSetImpl implements StringSet {
             return next.get(getIndex(letter));
         }
 
-
-
         StringSetEntry addEntry(char letter, boolean isLastLetter) {
             StringSetEntry e = new StringSetEntry(this, isLastLetter);
             next.set(getIndex(letter), e);
@@ -84,6 +82,10 @@ public class StringSetImpl implements StringSet {
         return new Prefix(curEntry, index);
     }
 
+    /**
+     * Removes string s, which is stored in trie, from the structure.
+     * @param s string to remove
+     */
     private void removePrefix(String s) {
         StringSetEntry curEntry = root;
 
