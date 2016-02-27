@@ -124,7 +124,7 @@ public class StringSetImpl implements StringSet {
         return true;
     }
 
-    // This returns true if empty string is passed
+
     @Override
     public boolean contains(String element) {
         if (null == element) {
@@ -135,7 +135,6 @@ public class StringSetImpl implements StringSet {
         return (pref.prefixLength == element.length() && pref.lastEntry.isLastLetter);
     }
 
-    // This returns true if empty string is passed
     @Override
     public boolean remove(String element) {
         if (!contains(element)) {
