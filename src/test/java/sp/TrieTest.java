@@ -78,6 +78,8 @@ public class TrieTest {
  
         assertTrue(newTrie.contains("abc"));
         assertTrue(newTrie.contains("cde"));
+        assertFalse(newTrie.contains("ab"));
+        assertFalse(newTrie.contains(""));
         assertEquals(2, trie.size());
     }
  

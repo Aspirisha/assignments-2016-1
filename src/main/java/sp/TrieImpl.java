@@ -103,7 +103,6 @@ public class TrieImpl implements Trie, StreamSerializable, Serializable {
 
     @Override
     public void serialize(OutputStream out) throws IOException {
-        // TODO Auto-generated method stub
         ObjectOutputStream oos = new ObjectOutputStream(out);
         oos.writeObject(this);
     }
@@ -116,8 +115,7 @@ public class TrieImpl implements Trie, StreamSerializable, Serializable {
             TrieImpl t = (TrieImpl) ios.readObject();
             replace(t);
         } catch (ClassNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new IOException("Class " + TrieImpl.class.getCanonicalName() + " not found in input stream");
         }
     }
 
