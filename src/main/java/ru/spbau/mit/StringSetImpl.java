@@ -4,98 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StringSetImpl implements StringSet {
-    private StringSetEntry root = new StringSetEntry(null, false);
+    private final StringSetEntry root = new StringSetEntry(null, false);
     private int size = 0;
-
-
-    private class StringSetEntry {
-        static final int ALPHABET_SIZE = 52 + 6; // covers A-Z[...a-z
-
-        private boolean isLastLetter;
-        private List<StringSetEntry> next = new ArrayList<>(ALPHABET_SIZE);
-        private StringSetEntry prev;
-        private int numberOfSuccessors = 0;
-
-        StringSetEntry(StringSetEntry prev, boolean isLastLetter) {
-            this.prev = prev;
-            this.isLastLetter = isLastLetter;
-            for (int i = 0; i < ALPHABET_SIZE; i++) {
-                next.add(i, null);
-            }
-        }
-
-        private int getIndex(char letter) {
-            return letter - 'A';
-        }
-
-        StringSetEntry getNextEntry(char letter) {
-            return next.get(getIndex(letter));
-        }
-
-        StringSetEntry addEntry(char letter, boolean isLastLetter) {
-            StringSetEntry e = new StringSetEntry(this, isLastLetter);
-            next.set(getIndex(letter), e);
-            numberOfSuccessors++;
-            return e;
-        }
-
-        StringSetEntry removeEntry(char letter, boolean notLastLetter) {
-            numberOfSuccessors--;
-            int idx = getIndex(letter);
-
-            StringSetEntry nextEntry = next.get(idx);
-            if (nextEntry.numberOfSuccessors == 1 && notLastLetter) {
-                next.set(idx, null);
-            }
-
-            return nextEntry;
-        }
-    }
-
-
-    private class Prefix {
-        private StringSetEntry lastEntry;
-        private int prefixLength;
-
-        Prefix(StringSetEntry lastEntry, int prefixLength) {
-            this.lastEntry = lastEntry;
-            this.prefixLength = prefixLength;
-        }
-    }
-
-    private Prefix findLongestPrefix(String s) {
-        int index = 0;
-        StringSetEntry nextEntry = root;
-        StringSetEntry curEntry = root;
-
-        for (; nextEntry != null && index != s.length(); index++) {
-            curEntry = nextEntry;
-            nextEntry = nextEntry.getNextEntry(s.charAt(index));
-        }
-
-        if (nextEntry == null) {
-            index--;
-        } else {
-            curEntry = nextEntry;
-        }
-
-        return new Prefix(curEntry, index);
-    }
-
-    /**
-     * Removes string s, which is stored in trie, from the structure.
-     * @param s string to remove
-     */
-    private void removePrefix(String s) {
-        StringSetEntry curEntry = root;
-
-        for (int i = 0; i < s.length(); i++) {
-            char currentLetter = s.charAt(i);
-            boolean notLastLetter = i < (s.length() - 1);
-            curEntry = curEntry.removeEntry(currentLetter, notLastLetter);
-        }
-        curEntry.isLastLetter = false;
-    }
 
     @Override
     public boolean add(String element) {
@@ -113,7 +23,7 @@ public class StringSetImpl implements StringSet {
 
         size++;
         for (StringSetEntry se = curEntry.prev; se != null; se = se.prev) {
-            se.numberOfSuccessors++;
+            se.howManyStartsWithThisPrefix++;
         }
 
         for (; index != element.length(); index++) {
@@ -137,11 +47,22 @@ public class StringSetImpl implements StringSet {
 
     @Override
     public boolean remove(String element) {
-        if (!contains(element)) {
+        if (null == element) {
+            return false;
+        }
+        Prefix pref = findLongestPrefix(element);
+        if (pref.prefixLength != element.length() || !pref.lastEntry.isLastLetter) {
             return false;
         }
 
-        removePrefix(element);
+        StringSetEntry curEntry = pref.lastEntry.prev;
+        pref.lastEntry.isLastLetter = false;
+        int index = element.length() - 1;
+        while (curEntry != null) {
+            curEntry.removeEntry(element.charAt(index--));
+            curEntry = curEntry.prev;
+        }
+
         size--;
         return true;
     }
@@ -159,13 +80,90 @@ public class StringSetImpl implements StringSet {
 
         Prefix pref = findLongestPrefix(prefix);
 
-        int result = pref.lastEntry.numberOfSuccessors;
+        if (pref.prefixLength != prefix.length()) {
+            return 0;
+        }
+
+        int result = pref.lastEntry.howManyStartsWithThisPrefix;
 
         if (pref.lastEntry.isLastLetter) {
             result += 1;
         }
 
         return result;
+    }
+
+    private Prefix findLongestPrefix(String s) {
+        int index = 0;
+        StringSetEntry nextEntry = root;
+        StringSetEntry curEntry = root;
+
+        for (; nextEntry != null && index != s.length(); index++) {
+            curEntry = nextEntry;
+            nextEntry = nextEntry.getNextEntry(s.charAt(index));
+        }
+
+        if (nextEntry == null) {
+            index--;
+        } else {
+            curEntry = nextEntry;
+        }
+
+        return new Prefix(curEntry, index);
+    }
+
+    private static class StringSetEntry {
+        static final int ALPHABET_SIZE = 52 + 6; // covers A-Z[...a-z
+
+        // modifiers are useless here, but style checker is dummy
+        private boolean isLastLetter;
+        private final List<StringSetEntry> next = new ArrayList<>(ALPHABET_SIZE);
+        private final StringSetEntry prev;
+        private int howManyStartsWithThisPrefix = 0;
+
+        StringSetEntry(StringSetEntry prev, boolean isLastLetter) {
+            this.prev = prev;
+            this.isLastLetter = isLastLetter;
+            for (int i = 0; i < ALPHABET_SIZE; i++) {
+                next.add(i, null);
+            }
+        }
+
+        static int getIndex(char letter) {
+            return letter - 'A';
+        }
+
+        StringSetEntry getNextEntry(char letter) {
+            return next.get(getIndex(letter));
+        }
+
+        StringSetEntry addEntry(char letter, boolean isLastLetter) {
+            StringSetEntry e = new StringSetEntry(this, isLastLetter);
+            next.set(getIndex(letter), e);
+            howManyStartsWithThisPrefix++;
+            return e;
+        }
+
+        void removeEntry(char letter) {
+            howManyStartsWithThisPrefix--;
+            int idx = getIndex(letter);
+
+            StringSetEntry nextEntry = next.get(idx);
+            if (nextEntry.howManyStartsWithThisPrefix == 0) {
+                next.set(idx, null);
+            }
+        }
+    }
+
+
+    private class Prefix {
+        private final StringSetEntry lastEntry;
+        private int prefixLength;
+
+        Prefix(StringSetEntry lastEntry, int prefixLength) {
+            this.lastEntry = lastEntry;
+            this.prefixLength = prefixLength;
+        }
     }
 
 }

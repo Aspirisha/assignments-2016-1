@@ -18,6 +18,44 @@ public class StringSetTest {
         assertTrue(stringSet.contains("abc"));
         assertEquals(1, stringSet.size());
         assertEquals(1, stringSet.howManyStartsWithPrefix("abc"));
+        
+        assertFalse(stringSet.contains(""));
+        assertFalse(stringSet.contains("dee"));
+        assertFalse(stringSet.add("abc"));
+        assertTrue(stringSet.add("abcd"));
+        assertTrue(stringSet.contains("abcd"));
+        assertTrue(stringSet.remove("abc"));
+        assertTrue(stringSet.contains("abcd"));
+        assertTrue(stringSet.add(""));
+        assertTrue(stringSet.contains(""));
+        assertFalse(stringSet.contains("ab"));
+        assertTrue(stringSet.add("ab"));
+        assertTrue(stringSet.contains("ab"));
+        assertFalse(stringSet.add("ab"));
+        assertTrue(stringSet.contains("ab"));
+        
+        assertTrue(stringSet.add("Zz"));
+        assertTrue(stringSet.contains("ab"));
+        assertFalse(stringSet.remove("dedefefeg"));
+        assertTrue(stringSet.contains("ab"));
+        assertTrue(stringSet.remove("ab"));
+        
+        assertFalse(stringSet.remove("ab"));
+
+        assertFalse(stringSet.add("Zz"));
+        assertFalse(stringSet.remove("Z"));
+        assertTrue(stringSet.remove("Zz"));
+        assertFalse(stringSet.remove("Zz"));
+        
+        assertFalse(stringSet.add(""));
+        assertTrue(stringSet.remove(""));
+        assertFalse(stringSet.contains(""));
+        assertTrue(stringSet.add(""));
+        
+        assertEquals(2, stringSet.size());
+        assertEquals(2, stringSet.howManyStartsWithPrefix(""));
+        
+        assertEquals(0, stringSet.howManyStartsWithPrefix("sa"));
     }
 
     public static StringSet instance() {
