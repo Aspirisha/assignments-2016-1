@@ -1,18 +1,21 @@
-package ru.spbau.mit;
+package sp;
 
 import static org.junit.Assert.*;
 import org.junit.Test;
+
+import sp.StreamSerializable;
+import sp.Trie;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class StringSetTest {
+public class TrieTest {
 
     @Test
     public void testSimple() {
-        StringSet stringSet = instance();
+        Trie stringSet = instance();
 
         assertTrue(stringSet.add("abc"));
         assertTrue(stringSet.contains("abc"));
@@ -58,16 +61,49 @@ public class StringSetTest {
         assertEquals(0, stringSet.howManyStartsWithPrefix("sa"));
     }
 
-    public static StringSet instance() {
+    @Test
+    public void testSimpleSerialization() throws IOException {
+        Trie trie = instance();
+ 
+        assertTrue(trie.add("abc"));
+        assertTrue(trie.add("cde"));
+        assertEquals(2, trie.size());
+ 
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ((StreamSerializable) trie).serialize(outputStream);
+ 
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+        Trie newTrie = instance();
+        ((StreamSerializable) newTrie).deserialize(inputStream);
+ 
+        assertTrue(newTrie.contains("abc"));
+        assertTrue(newTrie.contains("cde"));
+        assertEquals(2, trie.size());
+    }
+ 
+ 
+    @Test(expected=IOException.class)
+    public void testSimpleSerializationFails() throws IOException {
+        Trie trie = instance();
+ 
+        assertTrue(trie.add("abc"));
+        assertTrue(trie.add("cde"));
+ 
+        OutputStream outputStream = new OutputStream() {
+            @Override
+            public void write(int b) throws IOException {
+                throw new IOException("Fail");
+            }
+        };
+ 
+        ((StreamSerializable) trie).serialize(outputStream);
+    }
+ 
+    public static Trie instance() {
         try {
-            return (StringSet) Class.forName("ru.spbau.mit.StringSetImpl").newInstance();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            return (Trie) Class.forName("sp.TrieImpl").newInstance();
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+            throw new IllegalStateException(e);
         }
-        throw new IllegalStateException("Error while class loading");
     }
 }

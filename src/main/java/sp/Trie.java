@@ -1,6 +1,6 @@
-package ru.spbau.mit;
+package sp;
 
-public interface StringSet {
+public interface Trie {
     /**
      * Expected complexity: O(|element|)
      * @return <tt>true</tt> if this set did not already contain the specified

@@ -1,10 +1,17 @@
-package ru.spbau.mit;
+package sp;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StringSetImpl implements StringSet {
-    private final StringSetEntry root = new StringSetEntry(null, false);
+public class TrieImpl implements Trie, StreamSerializable, Serializable {
+    private static final long serialVersionUID = 1L;
+    private StringSetEntry root = new StringSetEntry(null, false);
     private int size = 0;
 
     @Override
@@ -93,6 +100,32 @@ public class StringSetImpl implements StringSet {
         return result;
     }
 
+
+    @Override
+    public void serialize(OutputStream out) throws IOException {
+        // TODO Auto-generated method stub
+        ObjectOutputStream oos = new ObjectOutputStream(out);
+        oos.writeObject(this);
+    }
+
+
+    @Override
+    public void deserialize(InputStream in) throws IOException {
+        ObjectInputStream ios = new ObjectInputStream(in);
+        try {
+            TrieImpl t = (TrieImpl) ios.readObject();
+            replace(t);
+        } catch (ClassNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    private void replace(TrieImpl other) {
+        root = other.root;
+        size = other.size;
+    }
+
     private Prefix findLongestPrefix(String s) {
         int index = 0;
         StringSetEntry nextEntry = root;
@@ -112,7 +145,9 @@ public class StringSetImpl implements StringSet {
         return new Prefix(curEntry, index);
     }
 
-    private static class StringSetEntry {
+    private static class StringSetEntry implements Serializable {
+        private static final long serialVersionUID = 1L;
+
         static final int ALPHABET_SIZE = 52 + 6; // covers A-Z[...a-z
 
         // modifiers are useless here, but style checker is dummy
@@ -165,5 +200,4 @@ public class StringSetImpl implements StringSet {
             this.prefixLength = prefixLength;
         }
     }
-
 }
