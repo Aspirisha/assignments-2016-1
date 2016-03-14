@@ -1,16 +1,23 @@
 package sp;
 
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
-public class TrieImpl implements Trie, StreamSerializable, Serializable {
-    private static final long serialVersionUID = 1L;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+public class TrieImpl implements Trie, StreamSerializable {
+    private static final int MAGIC_NUMBER = 314159265;
     private StringSetEntry root = new StringSetEntry(null, false);
     private int size = 0;
 
@@ -103,25 +110,56 @@ public class TrieImpl implements Trie, StreamSerializable, Serializable {
 
     @Override
     public void serialize(OutputStream out) throws IOException {
-        ObjectOutputStream oos = new ObjectOutputStream(out);
-        oos.writeObject(this);
+        DataOutputStream dos = new DataOutputStream(out);
+        Queue<SerializationQueueElement> q = new LinkedList<>();
+        int id = 0;
+        q.add(new SerializationQueueElement(id, -1, (char) 0, root));
+        JSONArray dump = new JSONArray();
+
+        while (!q.isEmpty()) {
+            SerializationQueueElement cur = q.poll();
+            dump.put(cur.serialize());
+            for (int i = 0; i < cur.sse.next.size(); i++) {
+                StringSetEntry sse = cur.sse.next.get(i);
+                if (null == sse) {
+                    continue;
+                }
+                id++;
+                q.add(new SerializationQueueElement(id, cur.id, i, sse));
+            }
+        }
+        
+        JSONObject metaObj = new JSONObject();
+        metaObj.put("array_size", id + 1);
+        metaObj.put("array", dump);
+        metaObj.put("words_number", size);
+        metaObj.put("magic", MAGIC_NUMBER);
+        dos.writeUTF(metaObj.toString());
+        dos.close();
     }
 
 
     @Override
     public void deserialize(InputStream in) throws IOException {
-        ObjectInputStream ios = new ObjectInputStream(in);
-        try {
-            TrieImpl t = (TrieImpl) ios.readObject();
-            replace(t);
-        } catch (ClassNotFoundException e) {
-            throw new IOException("Class " + TrieImpl.class.getCanonicalName() + " not found in input stream");
-        }
-    }
+        DataInputStream dis = new DataInputStream(in);
 
-    private void replace(TrieImpl other) {
-        root = other.root;
-        size = other.size;
+        JSONObject metaObj = new JSONObject(dis.readUTF());
+        int magicNumber = metaObj.getInt("magic");
+
+        if (magicNumber != MAGIC_NUMBER) {
+            throw new IOException("Input stream doesn't contain serialization of Trie object");
+        }
+
+        JSONArray dump = metaObj.getJSONArray("array");
+        int arraySize = metaObj.getInt("array_size");
+        HashMap<Integer, StringSetEntry> entries = new HashMap<>();
+        for (int i = 0; i < arraySize; i++) {
+            JSONObject obj = dump.getJSONObject(i);
+            StringSetEntry.deserialize(entries, obj);
+        }
+        root = entries.get(0);
+        size = metaObj.getInt("words_number");
+        dis.close();
     }
 
     private Prefix findLongestPrefix(String s) {
@@ -143,8 +181,25 @@ public class TrieImpl implements Trie, StreamSerializable, Serializable {
         return new Prefix(curEntry, index);
     }
 
-    private static class StringSetEntry implements Serializable {
-        private static final long serialVersionUID = 1L;
+    private class SerializationQueueElement {
+        private final int id;
+        private final int parentId;
+        private final int index;
+        private final StringSetEntry sse;
+
+        SerializationQueueElement(int id, int parentId, int index, StringSetEntry sse) {
+            this.id = id;
+            this.parentId = parentId;
+            this.index = index;
+            this.sse = sse;
+        }
+
+        JSONObject serialize() {
+            return sse.serialize(parentId, id, index);
+        }
+    }
+
+    private static class StringSetEntry {
 
         static final int ALPHABET_SIZE = 52 + 6; // covers A-Z[...a-z
 
@@ -153,6 +208,29 @@ public class TrieImpl implements Trie, StreamSerializable, Serializable {
         private final List<StringSetEntry> next = new ArrayList<>(ALPHABET_SIZE);
         private final StringSetEntry prev;
         private int howManyStartsWithThisPrefix = 0;
+
+        private JSONObject serialize(int parentId, Integer id, int index) {
+            JSONObject obj = new JSONObject();
+            obj.put("parent_id", parentId);
+            obj.put("id", id);
+            obj.put("is_last_letter", isLastLetter);
+            obj.put("index", index);
+            obj.put("How_many_starts_prefix", howManyStartsWithThisPrefix);
+            return obj;
+        }
+
+        private static StringSetEntry deserialize(HashMap<Integer, StringSetEntry> entries, JSONObject obj) {
+            int id = obj.getInt("id");
+            int parentId = obj.getInt("parent_id");
+            StringSetEntry parent = entries.containsKey(parentId) ? entries.get(parentId) : null;
+            StringSetEntry tmp = new StringSetEntry(parent, obj.getBoolean("is_last_letter"));
+            if (null != parent) {
+                parent.next.set(obj.getInt("index"), tmp);
+            }
+            tmp.howManyStartsWithThisPrefix = obj.getInt("How_many_starts_prefix");
+            entries.put(id, tmp);
+            return tmp;
+        }
 
         StringSetEntry(StringSetEntry prev, boolean isLastLetter) {
             this.prev = prev;
