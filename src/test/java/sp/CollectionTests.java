@@ -87,4 +87,14 @@ public class CollectionTests {
         assertEquals(Collections.map((Function1<Object, String>) Object::toString, c1),
                 c1.stream().map(Object::toString).collect(Collectors.toList()));
     }
+
+
+    @Test
+    public void testFolds() {
+        Function2<Integer, Integer, Integer> prodMod47 = (a, b) -> a * b % 47;
+        assertEquals(0, (long)Collections.foldl(prodMod47, 1, Arrays.asList(1,2,3,47)));
+        assertEquals(6*43 % 47, (long)Collections.foldl(prodMod47, 1, Arrays.asList(1,2,3,43)));
+        assertEquals((long)Collections.foldl(prodMod47, 1, Arrays.asList(1,2,3,47)),
+                (long)Collections.foldr(prodMod47, 1, Arrays.asList(1,2,3,47)));
+    }
 }
