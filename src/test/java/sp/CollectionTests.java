@@ -1,22 +1,20 @@
 package sp;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import junitx.framework.ListAssert;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
-import org.junit.Test;
-
-import com.google.common.primitives.Ints;
-
-import junitx.framework.ListAssert;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class CollectionTests {
 
-    public List<Integer> generateIntegerList(int size) {
+    private static List<Integer> generateIntegerList(int size) {
         List<Integer> randomNumbers = new ArrayList<>();
         Random gen = new Random();
 
@@ -29,36 +27,18 @@ public class CollectionTests {
 
     @Test
     public void testFilter() {
-        int[] a = {3, 14, 15, 92, 65};
-        List<Integer> l = Ints.asList(a);
+        List<Integer> l = Arrays.asList(3, 14, 15, 92, 65);
+        List<Integer> filtered = Collections.filter(arg -> arg > 7, l);
+        List<Integer> ans = l.stream().filter(x -> x > 7).collect(Collectors.toList());
 
-        List<Integer> filtered = Collections.filter(new Predicate<Integer>() {
-
-            @Override
-            public Boolean apply(Integer arg) {
-                return arg > 7;
-            }
-        }, l);
-
-
-        int[] ans = Arrays.stream(a).filter(x -> x > 7).toArray();
-        assertEquals(ans.length, filtered.size());
-        for (int i = 0; i < ans.length; i++) {
-            assertEquals(ans[i], (int)filtered.get(i));
-        }
+        assertEquals(ans, filtered);
     }
 
     @Test
     public void testMap() {
         int size = 100;
         List<Integer> randomNumbers = generateIntegerList(size);
-        List<Integer> mapped = Collections.map(new Function1<Integer, Integer>() {
-
-            @Override
-            public Integer apply(Integer arg) {
-                return arg * arg;
-            }
-        }, randomNumbers);
+        List<Integer> mapped = Collections.map(arg -> arg * arg, randomNumbers);
 
         for (int i = 0; i < size; i++) {
             assertEquals(randomNumbers.get(i) * randomNumbers.get(i), (int)mapped.get(i));
@@ -69,12 +49,7 @@ public class CollectionTests {
     public void testTakeWhile() {
         int size = 100;
         List<Integer> randomNumbers = generateIntegerList(size);
-        List<Integer> filtered = Collections.takeWhile(new Predicate<Integer>() {
-            @Override
-            public Boolean apply(Integer arg) {
-                return arg % 7 != 0;
-            }
-        }, randomNumbers);
+        List<Integer> filtered = Collections.takeWhile(arg -> arg % 7 != 0, randomNumbers);
 
         List<Integer> reference = new ArrayList<>();
         for (int x : randomNumbers) {
@@ -91,33 +66,25 @@ public class CollectionTests {
     public void testOr() {
         int size = 1000;
         List<Integer> randomNumbers = generateIntegerList(size);
-        List<Integer> filtered = Collections.takeWhile(Predicate.<Integer>ALWAYS_TRUE().or(new Predicate<Integer>() {
-
-            @Override
-            public Boolean apply(Integer arg) {
-                assert(false); // lazyness should save us
-                return false;
-            }
+        List<Integer> filtered = Collections.takeWhile(Predicate.always_true.or(arg -> {
+            assert (false); // lazyness will save us
+            return false;
         }), randomNumbers);
 
         assertEquals(size, filtered.size());
 
-        filtered = Collections.filter(new Predicate<Integer>() {
-
-            @Override
-            public Boolean apply(Integer arg) {
-                return arg % 7 == 3;
-            }
-        }.or(new Predicate<Integer>() {
-
-            @Override
-            public Boolean apply(Integer arg) {
-                return arg % 7 == 5;
-            }
-        }), randomNumbers);
+        filtered = Collections.filter(((Predicate<Integer>)arg -> arg % 7 == 3).
+                or(arg -> arg % 7 == 5), randomNumbers);
 
         for (int x : filtered) {
             assertTrue(x % 7 == 5 || x % 7 == 3);
         }
+    }
+
+    @Test
+    public void testIntsFunc() {
+        final List<Integer> c1 = Arrays.asList(1, 2, 3);
+        assertEquals(Collections.map((Function1<Object, String>) Object::toString, c1),
+                c1.stream().map(Object::toString).collect(Collectors.toList()));
     }
 }
