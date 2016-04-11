@@ -14,7 +14,8 @@ import static org.junit.Assert.assertTrue;
 
 public class CollectionTests {
 
-    private static List<Integer> generateIntegerList(int size) {
+    // is used by several tests so not private
+    static List<Integer> generateIntegerList(int size) {
         List<Integer> randomNumbers = new ArrayList<>();
         Random gen = new Random();
 
@@ -45,28 +46,11 @@ public class CollectionTests {
         }
     }
 
-    @Test
-    public void testTakeWhile() {
-        int size = 100;
-        List<Integer> randomNumbers = generateIntegerList(size);
-        List<Integer> filtered = Collections.takeWhile(arg -> arg % 7 != 0, randomNumbers);
-
-        List<Integer> reference = new ArrayList<>();
-        for (int x : randomNumbers) {
-            if (x % 7 != 0) {
-                reference.add(x);
-            } else {
-                break;
-            }
-        }
-        ListAssert.assertEquals(reference, filtered);
-    }
-
     @Test 
     public void testOr() {
         int size = 1000;
         List<Integer> randomNumbers = generateIntegerList(size);
-        List<Integer> filtered = Collections.takeWhile(Predicate.always_true.or(arg -> {
+        List<Integer> filtered = Collections.takeWhile(Predicate.ALWAYS_TRUE.or(arg -> {
             assert (false); // lazyness will save us
             return false;
         }), randomNumbers);
@@ -96,5 +80,12 @@ public class CollectionTests {
         assertEquals(6*43 % 47, (long)Collections.foldl(prodMod47, 1, Arrays.asList(1,2,3,43)));
         assertEquals((long)Collections.foldl(prodMod47, 1, Arrays.asList(1,2,3,47)),
                 (long)Collections.foldr(prodMod47, 1, Arrays.asList(1,2,3,47)));
+
+        assertEquals("abcde", (String)Collections.foldl((s1, s2) -> s1 + s2, "",
+                Arrays.asList("a", "b", "c", "d", "e")));
+        assertEquals(1, (int)Collections.foldr((a, b) -> Math.max(a, a%b), 3,
+                Arrays.asList(1, 2, 3)));
+        assertEquals(3, (int)Collections.foldl((a, b) -> Math.max(a, a%b), 3,
+                Arrays.asList(1, 2, 3)));
     }
 }

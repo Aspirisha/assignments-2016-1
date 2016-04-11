@@ -1,6 +1,5 @@
 package sp;
 
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,13 +31,13 @@ public final class Collections {
         return output;
     }
 
-    static <A> List<A> takeUnless(Predicate<? super A> p, Iterable<A> c) {
+    public static <A> List<A> takeUnless(Predicate<? super A> p, Iterable<A> c) {
         return takeWhile(p.not(), c);
     }
 
-    static <A, R> R foldr(Function2<? super A, R, R> f, R ini, Iterable<A> c) {
+    public static <A, R> R foldr(Function2<? super A, R, R> f, R ini, Iterable<A> c) {
         R result = ini;
-        List<A> tmp = filter(Predicate.always_true, c);
+        List<A> tmp = StreamSupport.stream(c.spliterator(), false).collect(Collectors.toList());
         java.util.Collections.reverse(tmp);
         for (A x : tmp) {
             result = f.apply(x, result);
@@ -46,7 +45,7 @@ public final class Collections {
         return result;
     }
 
-    static <A, R> R foldl(Function2<R, ? super A, R> f, R ini, Iterable<A> c) {
+    public static <A, R> R foldl(Function2<R, ? super A, R> f, R ini, Iterable<A> c) {
         R result = ini;
         for (A x : c) {
             result = f.apply(result, x);

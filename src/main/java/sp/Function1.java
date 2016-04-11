@@ -7,6 +7,6 @@ public interface Function1<A, R> {
         // g(f(x))
         // return arg -> g.apply(apply(arg));
 
-        return arg -> g.apply(Function1.this.apply(arg));
+        return arg -> g.apply(this.apply(arg));
     }
 }
