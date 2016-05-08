@@ -1,9 +1,8 @@
 package sp;
 
+import java.util.ArrayList;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
-import static javafx.scene.input.KeyCode.T;
 
 /**
  * Created by andy on 5/6/16.
@@ -14,6 +13,7 @@ public class LightFutureImpl<R> implements LightFuture<R> {
     private R result = null;
     private volatile boolean ready = false;
     private boolean failed = false;
+    private ArrayList<LightFuture<?>> childrenTasks = new ArrayList<>();
 
     LightFutureImpl(Supplier<R> s, ThreadPool p) {
         supplier = s;
@@ -38,6 +38,11 @@ public class LightFutureImpl<R> implements LightFuture<R> {
                     ready = true;
                 }
             }
+
+            for (LightFuture task : childrenTasks) {
+                pool.addTask(task);
+            }
+            childrenTasks.clear();
         }
 
         if (failed)
@@ -55,7 +60,10 @@ public class LightFutureImpl<R> implements LightFuture<R> {
             }
         }, pool);
 
-        pool.addTask(lf);
+        if (ready)
+            pool.addTask(lf);
+        else
+            childrenTasks.add(lf);
         return lf;
     }
 }
